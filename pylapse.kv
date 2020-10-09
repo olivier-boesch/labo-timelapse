@@ -1,0 +1,138 @@
+BoxLayout:
+    orientation: 'horizontal'
+    padding: 10
+    spacing: 5
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: 2
+        size_hint_x: 0.4
+        Label:
+            text: 'Preview Settings'
+        ToggleButton:
+            id: toggle_preview
+            text: 'Toggle Preview'
+            on_state: app.preview(self.state)
+        Spinner:
+            id: resolution_preview
+            text: 'HD 1280x720p'
+            values : ('640x480', '800x600', 'HD 1280x720p', 'FHD 1920x1080p')
+            on_text: app.preview_resolution_change(self.text)
+        Label:
+            text: 'Timelapse Settings'
+        Spinner:
+            id: resolution_timelapse
+            text: 'FHD 1920x1080p'
+            values : ('640x480', '800x600', 'HD 1280x720p', 'FHD 1920x1080p', 'Max 2592x1944')
+            on_text: app.resolution_change(self.text)
+        Spinner:
+            id: rotation
+            text: 'No rotation'
+            values : ('No rotation', 'rotate 90°', 'rotate 180°', 'rotate 270°')
+            on_text: app.camera_angle_change(self.text)
+        BoxLayout:
+            orientation: 'horizontal'
+            Switch:
+                id: hflip
+                on_active: app.vflip_change(self.active)
+            Label :
+                text: 'Hor. Flip'
+        BoxLayout:
+            orientation: 'horizontal'
+            Switch:
+                id: vflip
+                on_active: app.hflip_change(self.active)
+            Label :
+                text: 'Vert. Flip'
+        BoxLayout:
+            orientation: 'horizontal'
+            Label :
+                text: 'Every'
+            Spinner:
+                id: interval_value
+                text: '10'
+                values: ('1', '2', '5', '10', '20', '30')
+                on_text: app.interval_time_change()
+            Spinner:
+                id: interval_unit
+                text: 's'
+                values: ('s', 'min', 'h', 'd')
+                on_text: app.interval_time_change()
+        BoxLayout:
+            orientation: 'horizontal'
+            Label :
+                text: 'Total'
+            Spinner:
+                id: total_value
+                text: '1'
+                values: ('1','2','5','10','20','30')
+                on_text: app.total_time_change()
+            Spinner:
+                id: total_unit
+                text: 'min'
+                values: ('s', 'min', 'h', 'd')
+                on_text: app.total_time_change()
+        BoxLayout:
+            orientation: 'horizontal'
+            Switch:
+                id: show_images
+            Label:
+                text: 'show images'
+        BoxLayout:
+            orientation: 'horizontal'
+            Switch:
+                id: add_time
+            Label:
+                text: 'Add time'
+        BoxLayout:
+            orientation: 'horizontal'
+            Switch:
+                id: consistent_images
+            Label:
+                text: 'consistent images'
+        Label:
+            text: 'Control'
+        Button:
+            text: 'Start Timelapse'
+            id: timelapse_toggle
+            on_release: app.timelapse_toggle()
+        Button:
+            id: create_video
+            text: 'Create Video (25fps)'
+            on_release: app.create_video()
+            disabled: True
+        Button:
+            id: delete_images
+            text: 'Delete Images'
+            background_color: (1, 0, 0, 0.5)
+            on_release: app.delete_images()
+        Button:
+            id: quit
+            text: 'Quit'
+            on_release: app.stop()
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: 2
+        Image:
+            id: preview
+            source: '1blackpixel.png'
+        Label:
+            id: infos
+            size_hint_y: 0.1
+            text: 'Ready'
+
+<DialogConfirm@Popup>
+  size_hint: 0.8,0.8
+  auto_dismiss: False
+  title: "Confirm?"
+  BoxLayout:
+    orientation: 'vertical'
+    Label:
+      text: "Should I stop the Timelapse ?"
+    BoxLayout:
+        orientation: 'horizontal'
+        Button:
+            text: 'Ok'
+            on_release: app.stop_timelapse()
+        Button:
+            text: 'Cancel'
+             on_release: self.dismiss()
