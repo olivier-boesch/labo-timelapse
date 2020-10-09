@@ -40,7 +40,5 @@ To do...
 
 ### Examples
 
-A completely  screwed up experiment (but the film is not bad...) : 
-
-<iframe width="560" height="315" sandbox="allow-same-origin allow-scripts allow-popups" src="https://tube-aix-marseille.beta.education.fr/videos/embed/b4ddbf78-ebdf-4be3-835c-8ca930b2d72b" frameborder="0" allowfullscreen></iframe>
+A completely  screwed up experiment (but the film is not bad...) : [here](https://tube-aix-marseille.beta.education.fr/videos/watch/b4ddbf78-ebdf-4be3-835c-8ca930b2d72b)
 
