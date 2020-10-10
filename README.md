@@ -40,5 +40,6 @@ To do...
 
 ### Examples
 
-A completely  screwed up experiment (but the film is not bad...) : [here](https://tube-aix-marseille.beta.education.fr/videos/watch/b4ddbf78-ebdf-4be3-835c-8ca930b2d72b)
+A completely  screwed up experiment (but the film is not bad...) : [here](https://tube-aix-marseille.beta.education.fr/videos/watch/b4ddbf78-ebdf-4be3-835c-8ca930b2d72b) (1 frame every minute - 24h of experiment - 30fps)
+
 
