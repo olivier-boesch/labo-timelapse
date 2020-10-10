@@ -12,6 +12,7 @@ from kivy.factory import Factory
 from datetime import timedelta
 from time import sleep
 
+
 class PylapseApp(App):
     """PylapseApp : Kivy Application to create Timelapse videos on the Raspberry pi"""
     cam = picamera.PiCamera()  # camera object
@@ -42,10 +43,10 @@ class PylapseApp(App):
             self.cam.resolution = self.resolution_preview
             # display preview
             self.cam.start_preview(fullscreen=False,
-                                   window=(x,y,w,h),
+                                   window=(x, y, w, h),
                                    rotation=self.rotation_angle,
                                    hflip=self.h_flip,
-                                   vflip = self.v_flip)
+                                   vflip=self.v_flip)
             # a bit of log
             Logger.info("Camera: preview enabled")
         # button is normal
@@ -199,9 +200,11 @@ class PylapseApp(App):
         self.cam.rotation = self.rotation_angle
         self.cam.hflip = self.h_flip
         self.cam.vflip = self.v_flip
+        # enable annotations on images
         if self.root.ids['add_time'].active:
             self.cam.annotate_background = picamera.Color('black')
             self.cam.annotate_foreground = picamera.Color('white')
+        # make image consistent across time and avoid 50Hz flickering
         if self.root.ids['consistent_images'].active:
             # Set ISO to the desired value
             camera.iso = 100
@@ -221,7 +224,6 @@ class PylapseApp(App):
         self.perform_capture()
         self.timelapse_started = True
         Logger.info("Timelapse: Started every: {:d} s / total: {:d} s".format(self.interval_time, self.total_time))
-        # adapt ui
 
     def stop_timelapse(self):
         """stop_timelapse: stops the timelapse"""
@@ -230,7 +232,7 @@ class PylapseApp(App):
             self.confirm_popup = None
         self.timelapse_event.cancel()
         self.timelapse_event = None
-        Logger.info("Timelapse: Stopped ({:d} frames captured)\Ready".format(self.frame_counter))
+        Logger.info("Timelapse: Stopped ({:d} frames captured)\nReady".format(self.frame_counter))
         self.frame_counter = 0
         self.timelapse_started = False
         self.change_ui_for_timelapse(start_timelapse=True)
@@ -258,7 +260,7 @@ class PylapseApp(App):
             self.root.ids['create_video'].disabled = True
             self.root.ids['delete_images'].disabled = True
             self.root.ids['quit'].disabled = True
-        else:  # False
+        else:  # False -> stop timelapse
             self.root.ids['timelapse_toggle'].text = 'Start Timelapse'
             self.root.ids['preview'].source = "1blackpixel.png"
             self.root.ids['infos'].text = "Ready"
@@ -292,7 +294,7 @@ class PylapseApp(App):
         if self.interval_time * self.frame_counter > self.total_time:
             self.stop_timelapse()
         Logger.info("Timelapse: captured frame num {:d} : {:s}".format(self.frame_counter, filename))
-        self.root.ids['infos'].text = "Timelapse Running (Captured \"{:s}.\")".format(filename)
+        self.root.ids['infos'].text = "Timelapse Running (Captured frame n°{:d}.)".format(self.frame_counter)
 
     def create_video(self):
         """create_video: create a video by calling ffmpeg"""
