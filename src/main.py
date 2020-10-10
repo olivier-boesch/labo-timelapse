@@ -185,15 +185,24 @@ class PylapseApp(App):
         """timelapse_toggle : start or stop timelapse"""
         # start timelapse if not started
         if not self.timelapse_started:
-            self.start_timelapse()
+            # stop preview to properly display the dialog
+            if self.root.ids['toggle_preview'].state == 'down':
+                self.cam.stop_preview()
+                self.root.ids['toggle_preview'].state = 'normal'
+            self.confirm_popup = Factory.DialogConfirmDelete()
+            self.confirm_popup.open()
         # or stop if it was running
         else:
             # check first if the user really wants to stop...
-            self.confirm_popup = Factory.DialogConfirm()
+            self.confirm_popup = Factory.DialogConfirmStop()
             self.confirm_popup.open()
 
     def start_timelapse(self):
         """start_timelapse: starts the timelapse"""
+        if self.confirm_popup is not None:
+            self.confirm_popup.dismiss()
+            self.confirm_popup = None
+        self.delete_images()
         self.timelapse_event = Clock.schedule_interval(lambda dt: self.perform_capture(), self.interval_time)
         self.frame_counter = 0
         self.cam.resolution = self.resolution

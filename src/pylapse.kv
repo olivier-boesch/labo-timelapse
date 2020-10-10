@@ -120,7 +120,8 @@ BoxLayout:
             size_hint_y: 0.1
             text: 'Ready'
 
-<DialogConfirm@Popup>
+
+<DialogConfirmStop@Popup>
   size_hint: 0.8,0.8
   auto_dismiss: False
   title: "Confirm?"
@@ -133,6 +134,23 @@ BoxLayout:
         Button:
             text: 'Ok'
             on_release: app.stop_timelapse()
+        Button:
+            text: 'Cancel'
+             on_release: self.dismiss()
+
+<DialogConfirmDelete@Popup>
+  size_hint: 0.8,0.8
+  auto_dismiss: False
+  title: "Confirm?"
+  BoxLayout:
+    orientation: 'vertical'
+    Label:
+      text: "Before Start Timelapse, Images must be deleted. Ok ?"
+    BoxLayout:
+        orientation: 'horizontal'
+        Button:
+            text: 'Ok'
+            on_release: app.start_timelapse()
         Button:
             text: 'Cancel'
              on_release: self.dismiss()
