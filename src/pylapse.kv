@@ -7,17 +7,6 @@ BoxLayout:
         spacing: 2
         size_hint_x: 0.4
         Label:
-            text: 'Preview Settings'
-        ToggleButton:
-            id: toggle_preview
-            text: 'Toggle Preview'
-            on_state: app.preview(self.state)
-        Spinner:
-            id: resolution_preview
-            text: 'HD 1280x720p'
-            values : ('640x480', '800x600', 'HD 1280x720p', 'FHD 1920x1080p')
-            on_text: app.preview_resolution_change(self.text)
-        Label:
             text: 'Timelapse Settings'
         Spinner:
             id: resolution_timelapse
@@ -87,6 +76,7 @@ BoxLayout:
             orientation: 'horizontal'
             Switch:
                 id: consistent_images
+                on_active: app.consistent_image_toggle(self.active)
             Label:
                 text: 'consistent images'
         Label:
@@ -101,11 +91,6 @@ BoxLayout:
             on_release: app.create_video()
             disabled: True
         Button:
-            id: delete_images
-            text: 'Delete Images'
-            background_color: (1, 0, 0, 0.5)
-            on_release: app.delete_images()
-        Button:
             id: quit
             text: 'Quit'
             on_release: app.stop()
@@ -115,6 +100,8 @@ BoxLayout:
         Image:
             id: preview
             source: '1blackpixel.png'
+            on_size: app.set_preview_dims(self.pos, self.size)
+            on_pos: app.set_preview_dims(self.pos, self.size)
         Label:
             id: infos
             size_hint_y: 0.1
@@ -122,35 +109,35 @@ BoxLayout:
 
 
 <DialogConfirmStop@Popup>
-  size_hint: 0.8,0.8
-  auto_dismiss: False
-  title: "Confirm?"
-  BoxLayout:
-    orientation: 'vertical'
-    Label:
-      text: "Should I stop the Timelapse ?"
+    size_hint: 0.8,0.8
+    auto_dismiss: False
+    title: "Confirm?"
     BoxLayout:
-        orientation: 'horizontal'
-        Button:
-            text: 'Ok'
-            on_release: app.stop_timelapse()
-        Button:
-            text: 'Cancel'
-             on_release: self.dismiss()
+        orientation: 'vertical'
+        Label:
+            text: "Should I stop the Timelapse ?"
+        BoxLayout:
+            orientation: 'horizontal'
+            Button:
+                text: 'Ok'
+                on_release: app.stop_timelapse()
+            Button:
+                text: 'Cancel'
+                on_release: root.dismiss()
 
 <DialogConfirmDelete@Popup>
-  size_hint: 0.8,0.8
-  auto_dismiss: False
-  title: "Confirm?"
-  BoxLayout:
-    orientation: 'vertical'
-    Label:
-      text: "Before Start Timelapse, Images must be deleted. Ok ?"
+    size_hint: 0.8,0.8
+    auto_dismiss: False
+    title: "Confirm?"
     BoxLayout:
-        orientation: 'horizontal'
-        Button:
-            text: 'Ok'
-            on_release: app.start_timelapse()
-        Button:
-            text: 'Cancel'
-             on_release: self.dismiss()
+        orientation: 'vertical'
+        Label:
+            text: "Before Start Timelapse, Images must be deleted. Ok ?"
+        BoxLayout:
+            orientation: 'horizontal'
+            Button:
+                text: 'Ok'
+                on_release: app.start_timelapse()
+            Button:
+                text: 'Cancel'
+                on_release: root.dismiss(); app.change_ui_for_timelapse(start_timelapse=False)
