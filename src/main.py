@@ -4,6 +4,9 @@ PyLapse : A python/kivy application to create Timelapses
 Olivier Boesch (c) 2020
 """
 
+# version -------
+__version__ = '0.9'
+
 # imports -------
 
 # kivy stuff
