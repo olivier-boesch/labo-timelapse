@@ -28,6 +28,10 @@ Pour le système (tel que sur la photo), Vous avez besoin :
 
 * visserie : 2x M5x40mm (vis à tête plate et écrou à oreille), 3x M4x15mm (vis à tête plate et écrou standard)
 
+* un collier de srrage plastique (max 2.5mm de large)
+
+* un peu de scotch double-face (type miroirs)
+
 #### Logiel
 
 * les dépendances (on peut les installer automatiquement avec le script **install_dependencies.sh**)
