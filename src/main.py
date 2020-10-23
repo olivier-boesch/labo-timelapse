@@ -295,6 +295,13 @@ class PylapseApp(App):
         # TODO: find a way to get ffmpeg stats...
         pass
 
+    @staticmethod
+    def delete_images():
+        """delete_images : empty the images dir"""
+        Logger.info("Timelapse: deleting images in the \"images\" dir")
+        import os
+        os.system('rm images/*')
+
 
 # Run the app -------
 app = PylapseApp()
