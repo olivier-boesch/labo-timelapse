@@ -12,6 +12,9 @@ from kivy.logger import Logger
 from kivy.clock import Clock
 from kivy.factory import Factory
 
+# system related
+from os import system
+
 # time related
 from datetime import timedelta
 from time import sleep
@@ -299,8 +302,7 @@ class PylapseApp(App):
     def delete_images():
         """delete_images : empty the images dir"""
         Logger.info("Timelapse: deleting images in the \"images\" dir")
-        import os
-        os.system('rm images/*')
+        system('rm images/*')
 
 
 # Run the app -------
