@@ -47,7 +47,7 @@ class PylapseApp(App):
         self.toggle_preview(on=True)
 
     def set_preview_dims(self, pos, size):
-        """set preview overlay coordinates : pos ansd size"""
+        """set preview overlay coordinates : pos and size"""
         x, y = pos
         w, h = size
         x = int(x)
@@ -55,7 +55,7 @@ class PylapseApp(App):
         y = int(self.root_window.size[1] - h - y)
         w = int(w)
         h = int(h)
-        self.cam.preview_window = (x,y,w,h)
+        self.cam.preview_window = (x, y, w, h)
 
     def on_stop(self):
         """when app stops"""
