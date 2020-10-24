@@ -93,7 +93,7 @@ BoxLayout:
         Button:
             id: quit
             text: 'Quit'
-            on_release: app.stop()
+            on_release: app.on_quit_button_released()
     BoxLayout:
         orientation: 'vertical'
         spacing: 2
@@ -141,3 +141,25 @@ BoxLayout:
             Button:
                 text: 'Cancel'
                 on_release: root.dismiss(); app.change_ui_for_timelapse(start_timelapse=False)
+
+
+<DialogConfirmQuit@Popup>
+    size_hint: 0.8,0.8
+    auto_dismiss: False
+    title: "Confirm?"
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            text: "What should I do?"
+        BoxLayout:
+            orientation: 'horizontal'
+            Button:
+                text: 'Quit the program'
+                on_release: app.stop()
+            Button:
+                text: 'Poweroff the Pi'
+                on_release: app.poweroff()
+            Button:
+                text: 'Nothing'
+                on_release: root.dismiss(); app.toggle_preview(on=True)
+                                                                                                                                                        

@@ -104,18 +104,18 @@ class PylapseApp(App):
         """consistent_image_toggle : set or unset 50Hz flickering filter and consistent image settings across time"""
         if state_active:
             # Set ISO to the desired value
-            # camera.iso = 100
-            self.cam.exposure_mode = 'verylong'
+            # self.cam.iso = 10
+            self.cam.exposure_mode = 'off'
             sleep(0.5)
             # Now fix the values
             # adjust speed as a multiple of 10ms to prevent 50Hz flickering (multiple of 100Hz -> 10000µs)
             # with a min of 10ms
             Logger.info("Camera: Shutter speed is {:3.0f}µts".format(self.cam.exposure_speed))
-            speed = max((self.cam.exposure_speed // 10000) * 10000, 10000)
+            speed = max(int(round(self.cam.exposure_speed / 10000)) * 10000, 10000)
             self.cam.shutter_speed = speed
             Logger.info("Camera: Shutter speed set to {:3.0f}µs".format(speed))
             g = self.cam.awb_gains
-            self.cam.awb_mode = 'incandescent'
+            self.cam.awb_mode = 'off'
             self.cam.awb_gains = g
         else:
             self.cam.shutter_speed = 0
@@ -298,14 +298,27 @@ class PylapseApp(App):
 
     def create_video(self):
         """create_video: create a video by calling ffmpeg"""
-        # TODO: find a way to get ffmpeg stats...
+        # TODO: find a way to get ffmpeg stats and run asynchronously
         pass
+
+    def on_quit_button_released(self):
+        self.toggle_preview(on=False)
+        p = Factory.DialogConfirmQuit()
+        p.open()
+
+    @staticmethod
+    def poweroff():
+        """poweroff the pi"""
+        Logger.info("App: Stopping the pi")
+        system("sudo poweroff")
+        self.stop()
 
     @staticmethod
     def delete_images():
         """delete_images : empty the images dir"""
         Logger.info("Timelapse: deleting images in the \"images\" dir")
-        system('rm images/*')
+        # delete the directory and recreate it
+        system("rm -rvf images && mkdir images")
 
 
 # Run the app -------
