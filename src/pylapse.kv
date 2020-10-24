@@ -70,6 +70,7 @@ BoxLayout:
             orientation: 'horizontal'
             Switch:
                 id: add_time
+                on_active: app.add_time_toggle(self.active)
             Label:
                 text: 'Add time'
         BoxLayout:
@@ -102,16 +103,31 @@ BoxLayout:
             source: '1blackpixel.png'
             on_size: app.set_preview_dims(self.pos, self.size)
             on_pos: app.set_preview_dims(self.pos, self.size)
-        Label:
-            id: infos
+        BoxLayout:
             size_hint_y: 0.1
-            text: 'Ready'
+            orientation: 'horizontal'
+            Label:
+                id: infos
+                text: 'Ready'
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_x: None
+                width: 48
+                Label:
+                    size_hint_y: 0.15
+                    id: usb_drive
+                    font_size: 9
+                Image:
+                    id: usb
+                    source: 'usb_key.png'
+                    opacity: 0.1
 
 
 <DialogConfirmStop@Popup>
     size_hint: 0.8,0.8
     auto_dismiss: False
-    title: "Confirm?"
+    on_open: app.toggle_preview(on=False)
+    title: "Stop Timelapse?"
     BoxLayout:
         orientation: 'vertical'
         Label:
@@ -128,7 +144,8 @@ BoxLayout:
 <DialogConfirmDelete@Popup>
     size_hint: 0.8,0.8
     auto_dismiss: False
-    title: "Confirm?"
+    title: "Start Timelapse?"
+    on_open: app.toggle_preview(on=False)
     BoxLayout:
         orientation: 'vertical'
         Label:
@@ -146,7 +163,9 @@ BoxLayout:
 <DialogConfirmQuit@Popup>
     size_hint: 0.8,0.8
     auto_dismiss: False
-    title: "Confirm?"
+    title: "Quit?"
+    on_dismiss: app.toggle_preview(on=True)
+    on_open: app.toggle_preview(on=False)
     BoxLayout:
         orientation: 'vertical'
         Label:
@@ -154,12 +173,66 @@ BoxLayout:
         BoxLayout:
             orientation: 'horizontal'
             Button:
-                text: 'Quit the program'
-                on_release: app.stop()
-            Button:
-                text: 'Poweroff the Pi'
+                text: 'Poweroff'
                 on_release: app.poweroff()
             Button:
                 text: 'Nothing'
-                on_release: root.dismiss(); app.toggle_preview(on=True)
-                                                                                                                                                        
+                on_release: root.dismiss()
+            Button:
+                text: 'Quit the program'
+                on_release: app.stop()
+
+<VideoProgress@Popup>
+    size_hint: 0.8,None
+    height: 200
+    auto_dismiss: True
+    title: "Creating Video..."
+    on_dismiss: app.toggle_preview(on=True)
+    on_open: app.toggle_preview(on=False)
+    BoxLayout:
+        padding: 30
+        orientation: 'vertical'
+        Label:
+            text: "Creating video from images"
+        ProgressBar:
+            id: progress_bar
+
+<DialogTransfer@Popup>
+    size_hint: 0.8,0.8
+    auto_dismiss: False
+    title: "Quit?"
+    on_open: app.toggle_preview(on=False)
+    on_dismiss: app.toggle_preview(on=True)
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            text: 'Transfer to USB drive :'
+        BoxLayout:
+            orientation: 'horizontal'
+            Switch:
+                id: transfer_images
+            Label:
+                text: "images"
+        BoxLayout:
+            orientation: 'horizontal'
+            Switch:
+                id: transfer_video
+                disabled: True
+            Label:
+                text: "vidéo"
+        BoxLayout:
+            orientation: 'horizontal'
+            Button:
+                text: "Transfer"
+                on_release: app.transfer_files(transfer_images.active, transfer_video.active); root.dismiss()
+            Button:
+                text: "Cancel"
+                on_release: root.dismiss(); app.eject_usb_drive()
+
+<DialogMessage@Popup>
+    size_hint: 0.8,0.8
+    auto_dismiss: True
+    on_open: app.toggle_preview(on=False); app.close_message_soon(self, 3)
+    on_dismiss: app.toggle_preview(on=True)
+    Label:
+        id: message_lbl

@@ -12,11 +12,17 @@ __version__ = '0.9'
 # kivy stuff
 from kivy.app import App
 from kivy.logger import Logger
-from kivy.clock import Clock
+from kivy.clock import Clock, mainthread
 from kivy.factory import Factory
 
 # system related
-from os import system
+from os import system, listdir
+from os.path import isfile, join
+import pyudev
+import shutil
+
+# video related
+import ffmpeg
 
 # time related
 from datetime import timedelta
@@ -41,10 +47,85 @@ class PylapseApp(App):
     frame_counter = 0  # frame counter for filenames
     timelapse_started = False  # flag set to True when timelapse is started
     confirm_popup = None  # popup to confirm timelapse stop
+    progress_popup = None
+    device_observer = None
+    pyudev_context = None
+    usb_drive_device = None
+    usb_drive_path = '/media/pi/usb'
+    transfer_popup = None
 
     def on_start(self):
         """when app starts"""
+        # pyudev context
+        self.pyudev_context = pyudev.Context()
+        # start preview
         self.toggle_preview(on=True)
+        # listening for usb drive plugged
+        self.start_listening_usb()
+
+    def start_listening_usb(self):
+        monitor = pyudev.Monitor.from_netlink(self.pyudev_context)
+        monitor.filter_by('block')
+        self.device_observer = pyudev.MonitorObserver(monitor, self.new_usb_drive)
+        self.device_observer.start()
+
+    def stop_listening_usb(self):
+        if self.device_observer is not None:
+            self.device_observer.stop()
+            self.device_observer = None
+
+    @mainthread
+    def new_usb_drive(self, action, device):
+        """triggered when a usb drive is plugged"""
+        if action == 'add' and device.device_type == 'partition':
+            self.usb_drive_device = device.device_node
+            drive_label = device.get('ID_FS_LABEL')
+            Logger.info('{0} usb key \"{1}\" ({2})'.format(action, drive_label, self.usb_drive_device))
+            self.root.ids['usb'].opacity = 1.0
+            self.root.ids['usb_drive'].text = drive_label
+            system('sudo mount -o gid=1000,uid=1000 {0} {1}'.format(self.usb_drive_device, self.usb_drive_path))
+            self.toggle_preview(on=False)
+            Logger.info('{0} usb key \"{1}\" ({2} - > {3})'.format(action, drive_label,
+                                                                   self.usb_drive_device, self.usb_drive_path))
+            self.transfer_popup = Factory.DialogTransfer()
+            self.transfer_popup.open()
+        elif action == 'remove' and device.device_type == 'partition':
+            self.usb_drive_device = None
+            self.root.ids['usb'].opacity = 0.1
+            self.root.ids['usb_drive'].text = ''
+            Logger.info('{0} usb key \"{1}\" ({2})'.format(action, device.get('ID_FS_LABEL'), device.device_node))
+            if self.transfer_popup is not None:
+                self.transfer_popup.dismiss()
+                self.transfer_popup = None
+
+    def eject_usb_drive(self):
+        if self.usb_drive_device is not None:
+            system('sudo eject {0}'.format(self.usb_drive_device))
+            Logger.info('eject usb key {0}'.format(self.usb_drive_device))
+
+    def transfer_files(self, transfer_images=True, transfer_video=False):
+        try:
+            if transfer_images or transfer_video:
+                system("rm -rvf {0}/timelapse && mkdir {0}/timelapse".format(self.usb_drive_path))
+            if transfer_images:
+                files = [f for f in listdir('../images') if isfile(join('../images', f))]
+                for f in files:
+                    shutil.copy2(join('../images', f), join(self.usb_drive_path, 'timelapse'))
+            if transfer_video:
+                shutil.copy2(join('../video', 'timelapse.mp4'), join(self.usb_drive_path, 'timelapse'))
+            self.eject_usb_drive()
+            self.show_message('Transfer Success', 'Files are copied on USB drive')
+        except:
+            self.show_message('Transfer Error', 'Can\'t copy files on USB drive')
+
+    def show_message(self, title, message):
+        p = Factory.DialogMessage()
+        p.open()
+        p.ids['message_lbl'].text = message
+        p.title = title
+
+    def close_message_soon(self, message_popup, when):
+        Clock.schedule_once(lambda dt: message_popup.dismiss(), when)
 
     def set_preview_dims(self, pos, size):
         """set preview overlay coordinates : pos and size"""
@@ -60,6 +141,7 @@ class PylapseApp(App):
     def on_stop(self):
         """when app stops"""
         self.toggle_preview(on=False)
+        self.stop_listening_usb()
 
     def toggle_preview(self, on):
         """preview : Toggle display of the preview"""
@@ -72,6 +154,7 @@ class PylapseApp(App):
                                    hflip=self.h_flip,
                                    vflip=self.v_flip)
             self.set_preview_dims(self.root.ids['preview'].pos, self.root.ids['preview'].size)
+            self.cam.resolution = self.resolution
             # a bit of log
             Logger.info("Camera: preview enabled")
         else:
@@ -99,6 +182,16 @@ class PylapseApp(App):
         else:
             self.rotation_angle = 0
         self.cam.rotation = self.rotation_angle
+
+    def add_time_toggle(self, state_active):
+        if state_active:
+            self.cam.annotate_background = picamera.Color('black')
+            self.cam.annotate_foreground = picamera.Color('white')
+            self.cam.annotate_text = 'Elapsed Time'
+        else:
+            self.cam.annotate_background = None
+            self.cam.annotate_foreground = picamera.Color('white')
+            self.cam.annotate_text = ''
 
     def consistent_image_toggle(self, state_active):
         """consistent_image_toggle : set or unset 50Hz flickering filter and consistent image settings across time"""
@@ -200,7 +293,6 @@ class PylapseApp(App):
         """timelapse_toggle : start or stop timelapse"""
         # start timelapse if not started
         if not self.timelapse_started:
-            self.change_ui_for_timelapse(start_timelapse=True)
             self.confirm_popup = Factory.DialogConfirmDelete()
             self.confirm_popup.open()
         # or stop if it was running
@@ -211,20 +303,13 @@ class PylapseApp(App):
 
     def start_timelapse(self):
         """start_timelapse: starts the timelapse"""
+        self.change_ui_for_timelapse(start_timelapse=True)
         if self.confirm_popup is not None:
             self.confirm_popup.dismiss()
             self.confirm_popup = None
         self.delete_images()
         self.timelapse_event = Clock.schedule_interval(lambda dt: self.perform_capture(), self.interval_time)
         self.frame_counter = 0
-        # enable annotations on images (white text on black background)
-        if self.root.ids['add_time'].active:
-            self.cam.annotate_background = picamera.Color('black')
-            self.cam.annotate_foreground = picamera.Color('white')
-        # make image consistent across time and avoid 50Hz flickering
-        if self.root.ids['consistent_images'].active:
-            self.consistent_image_toggle(state_active=True)
-        self.change_ui_for_timelapse(start_timelapse=True)
         self.perform_capture()
         self.timelapse_started = True
         Logger.info("Timelapse: Started every: {:d} s / total: {:d} s".format(self.interval_time, self.total_time))
@@ -234,9 +319,7 @@ class PylapseApp(App):
         if self.confirm_popup is not None:
             self.confirm_popup.dismiss()
             self.confirm_popup = None
-        self.cam.annotate_background = None
-        self.cam.annotate_foreground = picamera.Color('white')
-        self.cam.annotate_text = ""
+        self.cam.annotate_text = "Elapsed time"
         self.timelapse_event.cancel()
         self.timelapse_event = None
         Logger.info("Timelapse: Stopped ({:d} frames captured)".format(self.frame_counter))
@@ -247,6 +330,7 @@ class PylapseApp(App):
     def change_ui_for_timelapse(self, start_timelapse=True):
         """change_ui_for_timelapse: disable/enable everything possible for/after timelapse"""
         if start_timelapse:
+            self.stop_listening_usb()
             self.toggle_preview(on=False)
             self.root.ids['timelapse_toggle'].text = 'Stop Timelapse'
             self.root.ids['resolution_timelapse'].disabled = True
@@ -263,6 +347,7 @@ class PylapseApp(App):
             # self.root.ids['create_video'].disabled = True
             self.root.ids['quit'].disabled = True
         else:  # False -> stop timelapse
+            self.start_listening_usb()
             self.toggle_preview(on=True)
             self.root.ids['timelapse_toggle'].text = 'Start Timelapse'
             self.root.ids['preview'].source = "1blackpixel.png"
@@ -283,7 +368,7 @@ class PylapseApp(App):
 
     def perform_capture(self):
         """perform_capture : get one frame and record it as jpg"""
-        filename = "images/img_{:05d}.jpg".format(self.frame_counter)
+        filename = "../images/img_{:05d}.jpg".format(self.frame_counter)
         if self.root.ids['add_time'].active:
             elapsed_time = timedelta(seconds=self.interval_time * self.frame_counter)
             self.cam.annotate_text = str(elapsed_time).replace("day", "jour")
@@ -299,6 +384,11 @@ class PylapseApp(App):
     def create_video(self):
         """create_video: create a video by calling ffmpeg"""
         # TODO: find a way to get ffmpeg stats and run asynchronously
+        self.toggle_preview(on=False)
+        self.progress_popup = Factory.VideoProgress()
+        self.progress_popup.open()
+
+    def launch_video_thread(self):
         pass
 
     def on_quit_button_released(self):
@@ -318,7 +408,7 @@ class PylapseApp(App):
         """delete_images : empty the images dir"""
         Logger.info("Timelapse: deleting images in the \"images\" dir")
         # delete the directory and recreate it
-        system("rm -rvf images && mkdir images")
+        system("rm -rvf ../images && mkdir ../images")
 
 
 # Run the app -------

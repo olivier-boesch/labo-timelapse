@@ -53,7 +53,13 @@ Coming soon...
 * aller dans le répertoire des sources : `cd src`
 * lancer le programme : `python3 main.py`
 
-### Exemples
+## Exemples
 
 Coming soon...
+
+## Crédits
+
+* icone USB : USB by Mister Pixel from the Noun Project
+
+
 
