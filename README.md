@@ -50,8 +50,19 @@ Coming soon...
 * cloner le dépôt github : `git clone https://github.com/olivier-boesch/labo-timelapse.git`
 * aller dans le répertoire du dépôt : `cd labo-timelapse`
 * installer les dépendances : `bash install_dependencies.sh`
-* aller dans le répertoire des sources : `cd src`
-* lancer le programme : `python3 main.py`
+* lancer le programme : `bash launch_pylapse.sh`
+
+## Faire une vidéo (solution d'attente)
+
+la résultion de la vidéo est à l'identique de celle des images.
+
+options:
+
+* r : nombre d'images par secondes (ici 25)
+* y : ne demande pas à l'utilisateur
+* vcodec : encodage en mp4/x264
+
+`ffmpeg -y -r 25 -i img_%05d.jpg  -vcodec libx264 timelapse.mp4`
 
 ## Exemples
 
